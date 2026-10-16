@@ -17,6 +17,13 @@ public class Review
     public string Comment { get; set; } = string.Empty;
 }
 
+public class MenuItem
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public bool IsBestSeller { get; set; }
+}
+
 public class FoodSpot
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -32,9 +39,8 @@ public class FoodSpot
     public string ImageUrl { get; set; } = string.Empty;
     public bool IsHighDemand { get; set; }
     public int EstTransitMinutes { get; set; } = 15;
+    public string StarQuality { get; set; } = "Heritage Recipe";
+    public string MapsQueryAddress { get; set; } = string.Empty;
     public Review FeaturedReview { get; set; } = new();
-    
-    // Normalized SVG Coordinates on Cebu Map (X: 10-90%, Y: 10-90%)
-    public int MapX { get; set; } = 50;
-    public int MapY { get; set; } = 50;
+    public List<MenuItem> MenuHighlights { get; set; } = new();
 }

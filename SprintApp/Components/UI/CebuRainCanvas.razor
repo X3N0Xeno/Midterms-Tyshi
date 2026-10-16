@@ -1,0 +1,25 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<canvas id="cebuRainCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+@code {
+    private IJSObjectReference? _module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initCebuCanvas");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("destroyCebuCanvas");
+        }
+        catch { }
+    }
+}

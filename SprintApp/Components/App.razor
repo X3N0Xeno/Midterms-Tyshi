@@ -5,10 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
 </head>
 <body class="bg-neutral-50 text-neutral-900 antialiased min-h-screen">
-    <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <Routes @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+
+    <!-- Essential Blazor runtime script -->
     <script src="_framework/blazor.web.js"></script>
+
+    <!-- Cebu Raining Canvas Physics Script -->
+    <script>
+        let animationFrameId;
+        window.initCebuCanvas = () => {
+            const canvas = document.getElementById('cebuRainCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            resize();
+            window.addEventListener('resize', resize);
+
+            const mouse = { x: -1000, y: -1000, radius: 120 };
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            window.addEventListener('mouseout', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            const icons = ['☀️', '🍢', '🎸', '🍚', '🐖', '🥥'];
+            const particles = Array.from({ length: 30 }, () => ({
+                char: icons[Math.floor(Math.random() * icons.length)],
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 14 + 14,
+                speedY: Math.random() * 0.8 + 0.4,
+                speedX: (Math.random() - 0.5) * 0.3,
+                baseSpeedX: (Math.random() - 0.5) * 0.3,
+                vx: 0,
+                vy: 0,
+                opacity: Math.random() * 0.25 + 0.15
+            }));
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    const dx = p.x - mouse.x;
+                    const dy = p.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        const angle = Math.atan2(dy, dx);
+                        p.vx += Math.cos(angle) * force * 5;
+                        p.vy += Math.sin(angle) * force * 5;
+                    }
+
+                    p.x += p.speedX + p.vx;
+                    p.y += p.speedY + p.vy;
+                    p.vx *= 0.90;
+                    p.vy *= 0.90;
+
+                    if (p.y > canvas.height + 40) {
+                        p.y = -30;
+                        p.x = Math.random() * canvas.width;
+                    }
+                    if (p.x < -30) p.x = canvas.width + 20;
+                    if (p.x > canvas.width + 30) p.x = -20;
+
+                    ctx.font = `${p.size}px sans-serif`;
+                    ctx.fillStyle = `rgba(180, 83, 9, ${p.opacity})`;
+                    ctx.fillText(p.char, p.x, p.y);
+                });
+
+                animationFrameId = requestAnimationFrame(animate);
+            };
+            animate();
+        };
+
+        window.destroyCebuCanvas = () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        };
+    </script>
 </body>
 </html>

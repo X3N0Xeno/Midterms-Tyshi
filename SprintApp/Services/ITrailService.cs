@@ -24,6 +24,6 @@ public interface ITrailService
     void ToggleFavorite(Guid spotId);
     bool IsSelected(Guid spotId);
     bool IsFavorite(Guid spotId);
-    void TriggerToast(string message);
+    void TriggerToast(string message, int durationMs = 3500);
     void DismissToast();
 }

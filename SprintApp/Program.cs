@@ -1,6 +1,8 @@
 using SprintApp.Components;
+using SprintApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<SprintApp.Services.ITrailService, SprintApp.Services.InMemoryTrailService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

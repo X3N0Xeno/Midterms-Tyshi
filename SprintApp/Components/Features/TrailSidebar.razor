@@ -1,0 +1,129 @@
+@using SprintApp.Models
+@using SprintApp.Services
+@inject ITrailService Trail
+@implements IDisposable
+
+<div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-sm sticky top-24 space-y-5">
+    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+        <div>
+            <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Active</span>
+            </div>
+            <h2 class="text-lg font-black text-neutral-900 tracking-tight">My Cebuano Food Trail</h2>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+            @Trail.TotalStops Stops
+        </span>
+    </div>
+
+    <!-- Traveler Count Stepper -->
+    <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-3 flex items-center justify-between">
+        <div>
+            <span class="text-[11px] font-bold text-neutral-500 block uppercase">Travelers</span>
+            <span class="text-xs font-semibold text-neutral-700">Recalculates group total</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl border border-neutral-200 p-1 shadow-sm">
+            <button @onclick="() => Trail.SetTravelers(Trail.TravelerCount - 1)" 
+                    disabled="@(Trail.TravelerCount <= 1)"
+                    class="w-7 h-7 rounded-lg bg-neutral-100 disabled:opacity-30 text-xs font-bold hover:bg-neutral-200 transition">
+                −
+            </button>
+            <span class="font-extrabold text-sm px-2 text-neutral-900">@Trail.TravelerCount</span>
+            <button @onclick="() => Trail.SetTravelers(Trail.TravelerCount + 1)" 
+                    class="w-7 h-7 rounded-lg bg-neutral-100 text-xs font-bold hover:bg-neutral-200 transition">
+                +
+            </button>
+        </div>
+    </div>
+
+    <!-- Stops Sequence Container -->
+    @if (!Trail.SelectedStops.Any())
+    {
+        <div class="py-12 px-4 text-center border-2 border-dashed border-neutral-200 rounded-3xl bg-neutral-50">
+            <span class="text-3xl block mb-2">🍢</span>
+            <h4 class="text-sm font-bold text-neutral-800">No Stops Selected</h4>
+            <p class="text-xs text-neutral-500 mt-1">Tap "+ Add to Trail" on any food spot card to begin your custom route.</p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+            @for (int i = 0; i < Trail.SelectedStops.Count; i++)
+            {
+                var stop = Trail.SelectedStops[i];
+                var index = i;
+                var isFirst = index == 0;
+                var isLast = index == Trail.SelectedStops.Count - 1;
+
+                <div class="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between gap-2 hover:border-amber-400 transition">
+                    <!-- Chronological Index Badge -->
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="w-6 h-6 rounded-full bg-neutral-900 text-white font-black text-xs flex items-center justify-center flex-shrink-0">
+                            @(index + 1)
+                        </span>
+                        <div class="truncate">
+                            <h4 class="font-bold text-xs text-neutral-900 truncate">@stop.Name</h4>
+                            <span class="text-[10px] text-neutral-400">@stop.District • ₱@stop.EstimatedPrice.ToString("N0")</span>
+                        </div>
+                    </div>
+
+                    <!-- Reorder & Delete Controls -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button @onclick="() => Trail.MoveEarlier(index)" 
+                                disabled="@isFirst" 
+                                title="Move Earlier"
+                                class="w-6 h-6 rounded-lg bg-white border border-neutral-200 text-neutral-600 disabled:opacity-20 hover:bg-neutral-100 text-xs flex items-center justify-center font-bold">
+                            ▲
+                        </button>
+                        <button @onclick="() => Trail.MoveLater(index)" 
+                                disabled="@isLast" 
+                                title="Move Later"
+                                class="w-6 h-6 rounded-lg bg-white border border-neutral-200 text-neutral-600 disabled:opacity-20 hover:bg-neutral-100 text-xs flex items-center justify-center font-bold">
+                            ▼
+                        </button>
+                        <button @onclick="() => Trail.RemoveStop(stop.Id)" 
+                                title="Remove Stop"
+                                class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs flex items-center justify-center font-bold ml-1">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Expense Matrix -->
+        <div class="pt-4 border-t border-neutral-100 space-y-2.5 text-xs">
+            <div class="flex justify-between text-neutral-500 font-medium">
+                <span>Est. Transit:</span>
+                <span class="text-neutral-900 font-bold">~@Trail.TotalEstimatedMinutes mins</span>
+            </div>
+            <div class="flex justify-between text-neutral-500 font-medium">
+                <span>Per Person Expense:</span>
+                <span class="text-neutral-900 font-bold">₱@Trail.PerPersonExpense.ToString("N0")</span>
+            </div>
+            <div class="flex justify-between items-baseline pt-2 border-t border-neutral-100">
+                <span class="text-sm font-bold text-neutral-700">Group Budget:</span>
+                <span class="text-2xl font-black text-amber-600">₱@Trail.GroupTotal.ToString("N0")</span>
+            </div>
+
+            <!-- Export / Save Action Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button @onclick="@(() => Trail.TriggerToast("Your Cebu trail has been saved."))"
+                        class="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold rounded-xl transition">
+                    Save Trail
+                </button>
+                <button @onclick="@(() => Trail.TriggerToast("Your live trail map is ready to export."))"
+                        class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition shadow">
+                    Export Map
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Trail.OnChange += HandleChange;
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Trail.OnChange -= HandleChange;
+}

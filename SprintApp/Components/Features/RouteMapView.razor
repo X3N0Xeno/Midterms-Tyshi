@@ -1,0 +1,108 @@
+@using SprintApp.Models
+@using SprintApp.Services
+@inject ITrailService Trail
+
+<div class="bg-amber-50/60 rounded-3xl border-2 border-amber-200 p-6 flex flex-col gap-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+            <h3 class="text-lg font-black text-neutral-900">Live Cebu Culinary Transit Route</h3>
+            <p class="text-xs text-neutral-500">Auto-routes stops along Metro Cebu corridor in chronological order</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs bg-white px-3 py-1.5 rounded-full border border-neutral-200 shadow-sm font-semibold">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Dynamic Line Tracker
+        </div>
+    </div>
+
+    <!-- Scalable Visual Map Canvas -->
+    <div class="relative w-full h-[460px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-inner flex items-center justify-center">
+        <!-- Stylized Map Watermark & Grid Background -->
+        <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-70"></div>
+        <div class="absolute top-4 left-6 text-neutral-300 font-black text-4xl select-none uppercase tracking-widest pointer-events-none">
+            Cebu City
+        </div>
+        <div class="absolute bottom-4 right-6 text-neutral-300 font-bold text-xs uppercase tracking-wider select-none pointer-events-none">
+            Mactan Channel ➔
+        </div>
+
+        @if (!Trail.SelectedStops.Any())
+        {
+            <div class="relative z-10 text-center space-y-2 p-6">
+                <span class="text-3xl">🗺️</span>
+                <p class="text-sm font-bold text-neutral-700">No stops scheduled on the route</p>
+                <p class="text-xs text-neutral-400">Add food destinations from the catalog to populate pins and travel transit vectors.</p>
+            </div>
+        }
+        else
+        {
+            <!-- Connecting Route SVG Polyline -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                @if (Trail.SelectedStops.Count > 1)
+                {
+                    <polyline points="@GetRouteSvgPoints()" 
+                              fill="none" 
+                              stroke="#f59e0b" 
+                              stroke-width="3" 
+                              stroke-dasharray="6,6"
+                              stroke-linecap="round" />
+                }
+            </svg>
+
+            <!-- Rendered Pins -->
+            @for (int i = 0; i < Trail.SelectedStops.Count; i++)
+            {
+                var stop = Trail.SelectedStops[i];
+                var stopNumber = i + 1;
+                <div class="absolute -translate-x-1/2 -translate-y-1/2 z-10 group cursor-pointer transition-transform hover:scale-110" 
+                     style="left: @(stop.MapX)%; top: @(stop.MapY)%;">
+                    <!-- Marker Head -->
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white font-black text-xs shadow-lg flex items-center justify-center border-2 border-white ring-2 ring-rose-500/30">
+                            @stopNumber
+                        </div>
+                    </div>
+
+                    <!-- Marker Tooltip Card -->
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-neutral-900 text-white p-2.5 rounded-xl text-left shadow-2xl opacity-90 group-hover:opacity-100 pointer-events-none z-20">
+                        <div class="text-[10px] uppercase font-bold text-amber-400">Stop #@stopNumber • @stop.SuggestedDuration</div>
+                        <div class="text-xs font-bold truncate">@stop.Name</div>
+                        <div class="text-[10px] text-neutral-300">📍 @stop.District • ₱@stop.EstimatedPrice.ToString("N0")</div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Chronological Route Strip at bottom of map -->
+    @if (Trail.SelectedStops.Any())
+    {
+        <div class="flex items-center gap-3 overflow-x-auto pb-2">
+            @for (int i = 0; i < Trail.SelectedStops.Count; i++)
+            {
+                var stop = Trail.SelectedStops[i];
+                var index = i;
+                <div class="flex-shrink-0 bg-white border border-neutral-200 rounded-2xl p-3 shadow-sm flex items-center gap-3 min-w-[200px]">
+                    <div class="w-7 h-7 rounded-full bg-amber-500 text-white font-black text-xs flex items-center justify-center">
+                        @(index + 1)
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-neutral-900 truncate">@stop.Name</p>
+                        <p class="text-[10px] text-neutral-400">@stop.District</p>
+                    </div>
+                </div>
+                @if (i < Trail.SelectedStops.Count - 1)
+                {
+                    <span class="text-neutral-400 font-bold text-xs">➔</span>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string GetRouteSvgPoints()
+    {
+        // SVG coordinate mapping assuming 100% viewport width and height
+        return string.Join(" ", Trail.SelectedStops.Select(s => $"{s.MapX}%,{s.MapY}%"));
+    }
+}

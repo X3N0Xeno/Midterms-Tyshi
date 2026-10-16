@@ -1,0 +1,30 @@
+@using SprintApp.Models
+
+<figure class="flex items-start gap-2.5 rounded-2xl border border-neutral-100 bg-neutral-50/80 @(Compact ? "p-2.5" : "p-4")">
+    <div class="flex flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-neutral-700 to-neutral-950 font-black text-white @(Compact ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-xs")"
+         aria-hidden="true">
+        @Review.AvatarInitials
+    </div>
+    <div class="min-w-0">
+        <figcaption class="flex items-center gap-2">
+            <span class="font-bold text-neutral-900 @(Compact ? "text-[11px]" : "text-xs")">@Review.ReviewerName</span>
+            @if (!Compact)
+            {
+                <span class="flex text-amber-400" aria-label="@Review.RatingStars out of 5 stars">
+                    @for (var i = 0; i < Review.RatingStars; i++)
+                    {
+                        <StarIcon Class="w-3 h-3" />
+                    }
+                </span>
+            }
+        </figcaption>
+        <blockquote class="italic leading-snug text-neutral-600 @(Compact ? "line-clamp-2 text-[11px]" : "mt-1 text-xs")">
+            “@Review.Comment”
+        </blockquote>
+    </div>
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public Review Review { get; set; } = default!;
+    [Parameter] public bool Compact { get; set; }
+}

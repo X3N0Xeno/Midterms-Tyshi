@@ -3,112 +3,118 @@
 @inject ITrailService Trail
 @implements IDisposable
 
-<div class="bg-white rounded-3xl border border-amber-200/80 p-6 shadow-sm flex flex-col gap-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-            <div class="flex items-center gap-2">
-                <span class="p-1 rounded-lg bg-emerald-50 text-emerald-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                </span>
-                <h3 class="text-lg font-black text-neutral-900 tracking-tight">Active Google Maps Route</h3>
+<section aria-labelledby="route-title" class="overflow-hidden rounded-3xl border border-amber-200/80 bg-white/95 shadow-sm backdrop-blur-md">
+    <!-- Header -->
+    <div class="flex flex-col gap-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 via-white to-emerald-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 shadow-inner">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+            </span>
+            <div>
+                <h3 id="route-title" class="text-lg font-black tracking-tight text-neutral-900">Active Google Maps Route</h3>
+                <p class="text-xs text-neutral-500">Real-time navigational road route rendered through Google Maps</p>
             </div>
-            <p class="text-xs text-neutral-500 mt-0.5">Real-time navigational road route rendered through Google Maps</p>
-        </div>
-        <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-            @Trail.TotalStops Stops Chained
-        </span>
-    </div>
-
-    @if (!Trail.SelectedStops.Any())
-    {
-        <div class="h-96 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/40 flex flex-col items-center justify-center p-6 text-center">
-            <svg class="w-12 h-12 text-amber-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            <p class="text-sm font-bold text-neutral-800">No destination points active</p>
-            <p class="text-xs text-neutral-500 mt-1">Select 1 or more food spots from the cards view to load the live map route.</p>
-        </div>
-    }
-    else
-    {
-        <!-- Keyed iframe ensures the browser re-evaluates the frame immediately upon sequence/count changes -->
-        <div class="relative w-full h-[450px] rounded-2xl overflow-hidden border border-neutral-200 shadow-inner bg-neutral-100">
-            <iframe @key="MapRouteKey"
-                    class="w-full h-full border-0"
-                    loading="lazy"
-                    allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                    src="@GetGoogleMapsUrl()">
-            </iframe>
         </div>
 
-        <!-- Sequential Itinerary Strip -->
-        <div class="flex items-center gap-3 overflow-x-auto pb-2 pt-1">
-            @for (int i = 0; i < Trail.SelectedStops.Count; i++)
+        <div class="flex items-center gap-2">
+            <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold tabular-nums text-amber-800">
+                @Trail.TotalStops @(Trail.TotalStops == 1 ? "Stop" : "Stops") Chained
+            </span>
+            @if (Trail.SelectedStops.Any())
             {
-                var stop = Trail.SelectedStops[i];
-                var index = i;
-                <div class="flex-shrink-0 bg-neutral-50 border border-neutral-200 rounded-2xl p-3 shadow-sm flex items-center gap-3 min-w-[210px]">
-                    <span class="w-7 h-7 rounded-xl bg-neutral-900 text-white font-black text-xs flex items-center justify-center flex-shrink-0 shadow-sm">
-                        @(index + 1)
-                    </span>
-                    <div class="truncate">
-                        <p class="text-xs font-bold text-neutral-900 truncate">@stop.Name</p>
-                        <p class="text-[10px] text-neutral-400 truncate">@stop.District</p>
-                    </div>
-                </div>
-                @if (i < Trail.SelectedStops.Count - 1)
-                {
-                    <svg class="w-4 h-4 text-neutral-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                }
+                <a href="@MapsUrlBuilder.DirectionsUrl(Trail.SelectedStops)" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-xs font-bold text-white transition hover:bg-amber-600 active:scale-95">
+                    Open in Maps <span class="sr-only">(new tab)</span><span aria-hidden="true">↗</span>
+                </a>
             }
         </div>
-    }
-</div>
+    </div>
+
+    <div class="space-y-5 p-5">
+        @if (!Trail.SelectedStops.Any())
+        {
+            <div class="flex h-96 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/40 p-6 text-center">
+                <span class="mb-3 animate-float-y text-5xl" aria-hidden="true">📍</span>
+                <p class="text-sm font-bold text-neutral-800">No destination points active</p>
+                <p class="mt-1 max-w-xs text-xs text-neutral-500">Pick one or more food spots from the cards view to load the live map route.</p>
+                <button type="button" @onclick="OnBrowse"
+                        class="mt-4 rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600 active:scale-95">
+                    Browse food spots
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Map frame with browser-style chrome -->
+            <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 shadow-inner">
+                <div class="flex items-center gap-3 border-b border-neutral-200 bg-white/90 px-3 py-2">
+                    <span class="flex gap-1.5" aria-hidden="true">
+                        <span class="h-2.5 w-2.5 rounded-full bg-rose-400"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                    </span>
+                    <span class="flex-1 truncate rounded-full bg-neutral-100 px-3 py-1 text-[11px] font-medium text-neutral-500">
+                        🔒 maps.google.com · @(Trail.TotalStops > 1 ? "Driving route" : "Pinned location")
+                    </span>
+                </div>
+
+                <div class="relative h-[450px] w-full">
+                    <div class="absolute inset-0 flex animate-pulse items-center justify-center text-xs font-semibold text-neutral-400" aria-hidden="true">
+                        Loading map…
+                    </div>
+                    @* Keyed so the browser reloads the frame whenever order/count changes *@
+                    <iframe @key="MapRouteKey"
+                            title="Google Maps route for your Cebu food trail"
+                            class="relative h-full w-full border-0"
+                            loading="lazy"
+                            allowfullscreen
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="@MapsUrlBuilder.EmbedUrl(Trail.SelectedStops)">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Itinerary ribbon -->
+            <ol class="mask-fade-x no-scrollbar flex snap-x items-center gap-2 overflow-x-auto px-4 py-1" aria-label="Route sequence">
+                @for (var i = 0; i < Trail.SelectedStops.Count; i++)
+                {
+                    var stop = Trail.SelectedStops[i];
+                    var index = i;
+                    var isLast = index == Trail.SelectedStops.Count - 1;
+
+                    <li class="flex flex-shrink-0 snap-start items-center gap-2">
+                        <div class="flex min-w-[210px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md motion-reduce:hover:translate-y-0">
+                            <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl text-xs font-black text-white shadow-sm @(index == 0 ? "bg-emerald-500" : isLast ? "bg-amber-500" : "bg-neutral-900")">
+                                <span class="sr-only">Stop </span>@(index + 1)
+                            </span>
+                            <div class="min-w-0">
+                                <p class="truncate text-xs font-bold text-neutral-900">@stop.Name</p>
+                                <p class="truncate text-[10px] text-neutral-400">@stop.District</p>
+                            </div>
+                        </div>
+
+                        @if (!isLast)
+                        {
+                            <span class="flex items-center text-amber-400" aria-hidden="true">
+                                <span class="h-px w-3 bg-amber-300"></span>
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
+                            </span>
+                        }
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+</section>
 
 @code {
-    protected override void OnInitialized()
-    {
-        Trail.OnChange += HandleChange;
-    }
+    /// <summary>Optional: lets the empty state send the user back to the cards view.</summary>
+    [Parameter] public EventCallback OnBrowse { get; set; }
 
-    private void HandleChange()
-    {
-        InvokeAsync(StateHasChanged);
-    }
+    protected override void OnInitialized() => Trail.OnChange += HandleChange;
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Trail.OnChange -= HandleChange;
 
-    public void Dispose()
-    {
-        Trail.OnChange -= HandleChange;
-    }
-
-    // Dynamic key based on order of IDs to force iframe refresh on swap or add/delete
-    private string MapRouteKey => string.Join("-", Trail.SelectedStops.Select(s => s.Id.ToString()));
-
-    private string GetGoogleMapsUrl()
-    {
-        if (!Trail.SelectedStops.Any()) return string.Empty;
-
-        var stops = Trail.SelectedStops;
-        
-        // Single stop: simple point pin
-        if (stops.Count == 1)
-        {
-            var singleQuery = Uri.EscapeDataString(stops[0].MapsQueryAddress);
-            return $"https://maps.google.com/maps?q={singleQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed";
-        }
-
-        // 2 or more stops: saddr is Stop 1, daddr is Stop 2 + to:Stop 3 + to:Stop 4...
-        var origin = Uri.EscapeDataString(stops[0].MapsQueryAddress);
-        var firstDestination = Uri.EscapeDataString(stops[1].MapsQueryAddress);
-        
-        var url = $"https://maps.google.com/maps?saddr={origin}&daddr={firstDestination}";
-
-        // Chain every subsequent stop using +to:
-        for (int i = 2; i < stops.Count; i++)
-        {
-            url += $"+to:{Uri.EscapeDataString(stops[i].MapsQueryAddress)}";
-        }
-
-        url += "&output=embed";
-        return url;
-    }
+    // Order-sensitive key forces the iframe to refresh on swap, add or delete.
+    private string MapRouteKey => string.Join("-", Trail.SelectedStops.Select(s => s.Id));
 }

@@ -1,97 +1,63 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f59e0b" />
     <base href="/" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
-</head>
-<body class="bg-neutral-50 text-neutral-900 antialiased min-h-screen">
-    <Routes @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
-
-    <!-- Essential Blazor runtime script -->
-    <script src="_framework/blazor.web.js"></script>
-
-    <!-- Cebu Raining Canvas Physics Script -->
     <script>
-        let animationFrameId;
-        window.initCebuCanvas = () => {
-            const canvas = document.getElementById('cebuRainCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            const resize = () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            };
-            resize();
-            window.addEventListener('resize', resize);
-
-            const mouse = { x: -1000, y: -1000, radius: 120 };
-            window.addEventListener('mousemove', (e) => {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-            });
-            window.addEventListener('mouseout', () => {
-                mouse.x = -1000;
-                mouse.y = -1000;
-            });
-
-            const icons = ['☀️', '🍢', '🎸', '🍚', '🐖', '🥥'];
-            const particles = Array.from({ length: 30 }, () => ({
-                char: icons[Math.floor(Math.random() * icons.length)],
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 14 + 14,
-                speedY: Math.random() * 0.8 + 0.4,
-                speedX: (Math.random() - 0.5) * 0.3,
-                baseSpeedX: (Math.random() - 0.5) * 0.3,
-                vx: 0,
-                vy: 0,
-                opacity: Math.random() * 0.25 + 0.15
-            }));
-
-            const animate = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                particles.forEach(p => {
-                    const dx = p.x - mouse.x;
-                    const dy = p.y - mouse.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < mouse.radius) {
-                        const force = (mouse.radius - distance) / mouse.radius;
-                        const angle = Math.atan2(dy, dx);
-                        p.vx += Math.cos(angle) * force * 5;
-                        p.vy += Math.sin(angle) * force * 5;
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        display: ['Fraunces', 'Georgia', 'serif']
+                    },
+                    keyframes: {
+                        'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+                        'pop-in': {
+                            '0%': { opacity: '0', transform: 'translateY(12px) scale(0.97)' },
+                            '100%': { opacity: '1', transform: 'none' }
+                        },
+                        'toast-in': {
+                            '0%': { opacity: '0', transform: 'translateY(16px) scale(0.96)' },
+                            '100%': { opacity: '1', transform: 'none' }
+                        },
+                        'heart-pop': {
+                            '0%': { transform: 'scale(1)' },
+                            '40%': { transform: 'scale(1.4)' },
+                            '100%': { transform: 'scale(1)' }
+                        },
+                        'float-y': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.2s ease-out',
+                        'pop-in': 'pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+                        'toast-in': 'toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'heart-pop': 'heart-pop 0.35s ease-out',
+                        'float-y': 'float-y 3s ease-in-out infinite'
                     }
-
-                    p.x += p.speedX + p.vx;
-                    p.y += p.speedY + p.vy;
-                    p.vx *= 0.90;
-                    p.vy *= 0.90;
-
-                    if (p.y > canvas.height + 40) {
-                        p.y = -30;
-                        p.x = Math.random() * canvas.width;
-                    }
-                    if (p.x < -30) p.x = canvas.width + 20;
-                    if (p.x > canvas.width + 30) p.x = -20;
-
-                    ctx.font = `${p.size}px sans-serif`;
-                    ctx.fillStyle = `rgba(180, 83, 9, ${p.opacity})`;
-                    ctx.fillText(p.char, p.x, p.y);
-                });
-
-                animationFrameId = requestAnimationFrame(animate);
-            };
-            animate();
-        };
-
-        window.destroyCebuCanvas = () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                }
+            }
         };
     </script>
+
+    <link rel="stylesheet" href="cebu.css" />
+    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+</head>
+<body class="min-h-screen bg-[#FFFDF7] font-sans text-neutral-900 antialiased">
+    <Routes @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+
+    <script src="js/cebu-canvas.js"></script>
+    <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

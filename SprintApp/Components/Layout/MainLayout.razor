@@ -1,11 +1,18 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="min-h-screen bg-neutral-50 flex flex-col">
+<a href="#main-content"
+   class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-xl focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white">
+    Skip to content
+</a>
+
+<div class="flex min-h-screen flex-col">
     @Body
 </div>
 
-<div id="blazor-error-ui" class="hidden">
+@* Blazor flips this to display:block on unhandled errors (inline style beats the Tailwind "hidden" class). *@
+<div id="blazor-error-ui"
+     class="fixed inset-x-0 bottom-0 z-[100] hidden border-t border-amber-300 bg-amber-100 px-5 py-3 text-sm font-medium text-amber-900 shadow-lg">
     An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a href="" class="reload ml-2 font-bold underline">Reload</a>
+    <a class="dismiss" role="button" aria-label="Dismiss">🗙</a>
 </div>

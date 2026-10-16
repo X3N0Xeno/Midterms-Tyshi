@@ -1,0 +1,31 @@
+@using SprintApp.Services
+@inject ITrailService Trail
+@implements IDisposable
+
+<section aria-label="Live trail metrics" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <StatCard Label="Group Budget"
+              Value="@BudgetText"
+              Icon="💰"
+              BadgeColorClass="bg-amber-100 text-amber-700"
+              ValueClass="text-amber-600" />
+    <StatCard Label="Scheduled Stops"
+              Value="@StopsText"
+              Icon="📍"
+              BadgeColorClass="bg-rose-100 text-rose-600"
+              ValueClass="text-neutral-900" />
+    <StatCard Label="Est. Transit Time"
+              Value="@TransitText"
+              Icon="🕒"
+              BadgeColorClass="bg-teal-100 text-teal-700"
+              ValueClass="text-teal-600" />
+</section>
+
+@code {
+    private string BudgetText => $"₱{Trail.GroupTotal:N0}";
+    private string StopsText => Trail.TotalStops == 1 ? "1 Stop" : $"{Trail.TotalStops} Stops";
+    private string TransitText => $"~{Trail.TotalEstimatedMinutes} mins";
+
+    protected override void OnInitialized() => Trail.OnChange += HandleChange;
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Trail.OnChange -= HandleChange;
+}

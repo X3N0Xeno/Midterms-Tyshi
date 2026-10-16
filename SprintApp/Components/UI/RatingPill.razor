@@ -1,0 +1,14 @@
+<span class="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800"
+      title="@Rating.ToString("0.0") out of 5">
+    <StarIcon Class="w-3.5 h-3.5 text-amber-500" />
+    <span class="tabular-nums">@Rating.ToString("0.0")</span>
+    @if (ReviewCount.HasValue)
+    {
+        <span class="font-medium text-amber-700/70">(@ReviewCount.Value.ToString("N0"))</span>
+    }
+</span>
+
+@code {
+    [Parameter] public double Rating { get; set; }
+    [Parameter] public int? ReviewCount { get; set; }
+}

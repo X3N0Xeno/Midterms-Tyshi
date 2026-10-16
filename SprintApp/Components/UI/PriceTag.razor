@@ -1,0 +1,18 @@
+@* Designed to sit on top of a dark photo overlay (white text). *@
+<div class="text-right leading-none text-white">
+    <span class="mb-1 block text-[11px] font-bold tracking-wider" aria-label="Price tier @ActiveCount of 3">
+        <span class="text-amber-300">@(new string('₱', ActiveCount))</span><span class="text-white/30">@(new string('₱', 3 - ActiveCount))</span>
+    </span>
+    <span class="@(Large ? "text-3xl" : "text-xl") font-black tracking-tight tabular-nums drop-shadow">
+        ₱@Price.ToString("N0")<span class="ml-0.5 text-[10px] font-medium text-white/75">/pax</span>
+    </span>
+</div>
+
+@code {
+    /// <summary>e.g. "₱₱₱" — the number of ₱ glyphs is the tier.</summary>
+    [Parameter] public string Tier { get; set; } = "₱";
+    [Parameter] public decimal Price { get; set; }
+    [Parameter] public bool Large { get; set; }
+
+    private int ActiveCount => Math.Clamp(Tier.Count(c => c == '₱'), 1, 3);
+}

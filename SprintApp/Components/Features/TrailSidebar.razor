@@ -3,127 +3,154 @@
 @inject ITrailService Trail
 @implements IDisposable
 
-<div class="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-sm sticky top-24 space-y-5">
-    <div class="flex items-center justify-between pb-4 border-b border-neutral-100">
+<aside aria-labelledby="trail-title" class="sticky top-24 space-y-5 rounded-3xl border border-neutral-200/80 bg-white/95 p-6 shadow-sm backdrop-blur-md">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
         <div>
             <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Active</span>
+                <span class="relative flex h-2 w-2">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                </span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Active Itinerary</span>
             </div>
-            <h2 class="text-lg font-black text-neutral-900 tracking-tight">My Cebuano Food Trail</h2>
+            <h2 id="trail-title" class="font-display text-xl font-black tracking-tight text-neutral-900">My Cebuano Food Trail</h2>
         </div>
-        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-            @Trail.TotalStops Stops
+        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tabular-nums text-amber-800">
+            @Trail.TotalStops @(Trail.TotalStops == 1 ? "Stop" : "Stops")
         </span>
     </div>
 
-    <!-- Traveler Count Stepper -->
-    <div class="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-3 flex items-center justify-between">
+    <!-- Pax stepper -->
+    <div class="flex items-center justify-between gap-3 rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-orange-50/60 p-3.5">
         <div>
-            <span class="text-[11px] font-bold text-neutral-500 block uppercase">Travelers</span>
-            <span class="text-xs font-semibold text-neutral-700">Recalculates group total</span>
+            <span id="pax-label" class="block text-[11px] font-bold uppercase tracking-wider text-amber-800/80">Travelers</span>
+            <span class="text-xs text-neutral-500">Recalculates group total</span>
         </div>
-        <div class="flex items-center gap-2 bg-white rounded-xl border border-neutral-200 p-1 shadow-sm">
-            <button @onclick="() => Trail.SetTravelers(Trail.TravelerCount - 1)" 
+        <div class="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1 shadow-sm" role="group" aria-labelledby="pax-label">
+            <button type="button"
+                    @onclick="() => Trail.SetTravelers(Trail.TravelerCount - 1)"
                     disabled="@(Trail.TravelerCount <= 1)"
-                    class="w-7 h-7 rounded-lg bg-neutral-100 disabled:opacity-30 text-xs font-bold hover:bg-neutral-200 transition">
+                    aria-label="Remove one traveler"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 text-sm font-bold transition hover:bg-neutral-200 active:scale-90 disabled:cursor-not-allowed disabled:opacity-30">
                 −
             </button>
-            <span class="font-extrabold text-sm px-2 text-neutral-900">@Trail.TravelerCount</span>
-            <button @onclick="() => Trail.SetTravelers(Trail.TravelerCount + 1)" 
-                    class="w-7 h-7 rounded-lg bg-neutral-100 text-xs font-bold hover:bg-neutral-200 transition">
+            <span class="min-w-[2rem] text-center text-sm font-extrabold tabular-nums text-neutral-900" aria-live="polite">@Trail.TravelerCount</span>
+            <button type="button"
+                    @onclick="() => Trail.SetTravelers(Trail.TravelerCount + 1)"
+                    aria-label="Add one traveler"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 text-sm font-bold transition hover:bg-neutral-200 active:scale-90">
                 +
             </button>
         </div>
     </div>
 
-    <!-- Stops Sequence Container -->
     @if (!Trail.SelectedStops.Any())
     {
-        <div class="py-12 px-4 text-center border-2 border-dashed border-neutral-200 rounded-3xl bg-neutral-50">
-            <span class="text-3xl block mb-2">🍢</span>
-            <h4 class="text-sm font-bold text-neutral-800">No Stops Selected</h4>
-            <p class="text-xs text-neutral-500 mt-1">Tap "+ Add to Trail" on any food spot card to begin your custom route.</p>
+        <div class="rounded-3xl border-2 border-dashed border-neutral-200 bg-neutral-50 px-4 py-12 text-center">
+            <span class="mb-2 block animate-float-y text-4xl" aria-hidden="true">🍢</span>
+            <h3 class="text-sm font-bold text-neutral-800">No Stops Selected</h3>
+            <p class="mt-1 text-xs text-neutral-500">Tap “Add to Trail” on any food spot to start your custom route.</p>
         </div>
     }
     else
     {
-        <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-            @for (int i = 0; i < Trail.SelectedStops.Count; i++)
+        <!-- Timeline -->
+        <ol class="thin-scroll -mr-1 max-h-[380px] overflow-y-auto pr-1" aria-label="Trail stops in order">
+            @for (var i = 0; i < Trail.SelectedStops.Count; i++)
             {
                 var stop = Trail.SelectedStops[i];
                 var index = i;
                 var isFirst = index == 0;
                 var isLast = index == Trail.SelectedStops.Count - 1;
 
-                <div class="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between gap-2 hover:border-amber-400 transition">
-                    <!-- Chronological Index Badge -->
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="w-6 h-6 rounded-full bg-neutral-900 text-white font-black text-xs flex items-center justify-center flex-shrink-0">
-                            @(index + 1)
-                        </span>
-                        <div class="truncate">
-                            <h4 class="font-bold text-xs text-neutral-900 truncate">@stop.Name</h4>
-                            <span class="text-[10px] text-neutral-400">@stop.District • ₱@stop.EstimatedPrice.ToString("N0")</span>
+                <li @key="stop.Id" class="relative animate-pop-in pb-3 pl-11 last:pb-0">
+                    @if (!isLast)
+                    {
+                        <span class="absolute bottom-[-0.25rem] left-[15px] top-9 border-l-2 border-dashed border-amber-300" aria-hidden="true"></span>
+                    }
+
+                    <span class="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black text-white shadow ring-4 ring-white @BadgeClass(isFirst, isLast)">
+                        <span class="sr-only">Stop </span>@(index + 1)
+                    </span>
+
+                    <div class="group flex items-center justify-between gap-2 rounded-2xl border border-neutral-200 bg-neutral-50/80 p-3 transition-all duration-200 hover:border-amber-400 hover:bg-white hover:shadow-md">
+                        <div class="min-w-0">
+                            <h3 class="truncate text-xs font-bold text-neutral-900">@stop.Name</h3>
+                            <p class="mt-0.5 flex items-center gap-1.5 text-[10px] text-neutral-500">
+                                <span class="truncate">@stop.District</span>
+                                <span aria-hidden="true">·</span>
+                                <span class="flex-shrink-0 font-semibold text-amber-700">₱@stop.EstimatedPrice.ToString("N0")</span>
+                            </p>
+                            <p class="mt-1 text-[10px] font-medium text-teal-700">🚗 ~@stop.EstTransitMinutes min transit</p>
+                        </div>
+
+                        <div class="flex flex-shrink-0 items-center gap-1 opacity-70 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                            <button type="button" @onclick="() => Trail.MoveEarlier(index)" disabled="@isFirst"
+                                    aria-label="Move @stop.Name earlier" title="Move earlier"
+                                    class="flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 transition hover:bg-neutral-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-20">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" /></svg>
+                            </button>
+                            <button type="button" @onclick="() => Trail.MoveLater(index)" disabled="@isLast"
+                                    aria-label="Move @stop.Name later" title="Move later"
+                                    class="flex h-7 w-7 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 transition hover:bg-neutral-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-20">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <button type="button" @onclick="() => Trail.RemoveStop(stop.Id)"
+                                    aria-label="Remove @stop.Name from trail" title="Remove stop"
+                                    class="ml-1 flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100 active:scale-90">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Reorder & Delete Controls -->
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                        <button @onclick="() => Trail.MoveEarlier(index)" 
-                                disabled="@isFirst" 
-                                title="Move Earlier"
-                                class="w-6 h-6 rounded-lg bg-white border border-neutral-200 text-neutral-600 disabled:opacity-20 hover:bg-neutral-100 text-xs flex items-center justify-center font-bold">
-                            ▲
-                        </button>
-                        <button @onclick="() => Trail.MoveLater(index)" 
-                                disabled="@isLast" 
-                                title="Move Later"
-                                class="w-6 h-6 rounded-lg bg-white border border-neutral-200 text-neutral-600 disabled:opacity-20 hover:bg-neutral-100 text-xs flex items-center justify-center font-bold">
-                            ▼
-                        </button>
-                        <button @onclick="() => Trail.RemoveStop(stop.Id)" 
-                                title="Remove Stop"
-                                class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs flex items-center justify-center font-bold ml-1">
-                            ✕
-                        </button>
-                    </div>
-                </div>
+                </li>
             }
+        </ol>
+
+        <!-- Budget summary -->
+        <div class="rounded-2xl bg-gradient-to-br from-neutral-900 to-neutral-800 p-4 text-white shadow-lg shadow-neutral-900/20">
+            <dl class="space-y-2 text-xs">
+                <div class="flex justify-between text-neutral-300">
+                    <dt>Est. transit</dt>
+                    <dd class="font-bold tabular-nums text-white">~@Trail.TotalEstimatedMinutes mins</dd>
+                </div>
+                <div class="flex justify-between text-neutral-300">
+                    <dt>Per person</dt>
+                    <dd class="font-bold tabular-nums text-white">₱@Trail.PerPersonExpense.ToString("N0")</dd>
+                </div>
+                <div class="flex justify-between text-neutral-300">
+                    <dt>Travelers</dt>
+                    <dd class="font-bold tabular-nums text-white">× @Trail.TravelerCount</dd>
+                </div>
+                <div class="flex items-baseline justify-between border-t border-white/10 pt-3">
+                    <dt class="text-sm font-bold">Group budget</dt>
+                    <dd class="text-2xl font-black tabular-nums text-amber-400">₱@Trail.GroupTotal.ToString("N0")</dd>
+                </div>
+            </dl>
         </div>
 
-        <!-- Expense Matrix -->
-        <div class="pt-4 border-t border-neutral-100 space-y-2.5 text-xs">
-            <div class="flex justify-between text-neutral-500 font-medium">
-                <span>Est. Transit:</span>
-                <span class="text-neutral-900 font-bold">~@Trail.TotalEstimatedMinutes mins</span>
-            </div>
-            <div class="flex justify-between text-neutral-500 font-medium">
-                <span>Per Person Expense:</span>
-                <span class="text-neutral-900 font-bold">₱@Trail.PerPersonExpense.ToString("N0")</span>
-            </div>
-            <div class="flex justify-between items-baseline pt-2 border-t border-neutral-100">
-                <span class="text-sm font-bold text-neutral-700">Group Budget:</span>
-                <span class="text-2xl font-black text-amber-600">₱@Trail.GroupTotal.ToString("N0")</span>
-            </div>
-
-            <!-- Export / Save Action Buttons -->
-            <div class="grid grid-cols-2 gap-2 pt-2">
-                <button @onclick="@(() => Trail.TriggerToast("Your Cebu trail has been saved."))"
-                        class="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold rounded-xl transition">
-                    Save Trail
-                </button>
-                <button @onclick="@(() => Trail.TriggerToast("Your live trail map is ready to export."))"
-                        class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition shadow">
-                    Export Map
-                </button>
-            </div>
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-2">
+            <button type="button" @onclick="@(() => Trail.TriggerToast("Your Cebu trail has been saved."))"
+                    class="w-full rounded-xl bg-neutral-100 py-2.5 text-xs font-bold text-neutral-800 transition hover:bg-neutral-200 active:scale-[0.98]">
+                Save Trail
+            </button>
+            <button type="button" @onclick="@(() => Trail.TriggerToast("Your live trail map is ready to export."))"
+                    class="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-xs font-bold text-white shadow transition hover:from-amber-600 hover:to-orange-600 active:scale-[0.98]">
+                Export Map
+            </button>
         </div>
     }
-</div>
+</aside>
 
 @code {
     protected override void OnInitialized() => Trail.OnChange += HandleChange;
     private void HandleChange() => InvokeAsync(StateHasChanged);
     public void Dispose() => Trail.OnChange -= HandleChange;
+
+    // Start = green, finish = mango, everything between = charcoal.
+    private string BadgeClass(bool isFirst, bool isLast) =>
+        isFirst ? "bg-emerald-500"
+        : isLast ? "bg-amber-500"
+        : "bg-neutral-900";
 }

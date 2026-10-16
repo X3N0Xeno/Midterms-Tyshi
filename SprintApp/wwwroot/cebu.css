@@ -1,0 +1,50 @@
+/* Small, framework-agnostic helpers that Tailwind's CDN build doesn't give us. */
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Consistent, branded keyboard focus ring */
+:focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+}
+
+/* Horizontal scroller with soft edge fade (itinerary ribbon) */
+.mask-fade-x {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+}
+
+.no-scrollbar {
+    scrollbar-width: none;
+}
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+/* Slim scrollbars for the sidebar list */
+.thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #fcd34d transparent;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

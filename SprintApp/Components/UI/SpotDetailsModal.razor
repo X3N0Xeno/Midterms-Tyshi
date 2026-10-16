@@ -1,100 +1,122 @@
 @using SprintApp.Models
+@using SprintApp.Services
 
-@if (Spot != null)
+@if (Spot is not null)
 {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in">
-        <div class="relative w-full max-w-2xl bg-white rounded-3xl border border-neutral-200 shadow-2xl overflow-hidden my-8" @onclick:stopPropagation>
-            <!-- Header Image Banner -->
-            <div class="relative h-64 w-full">
-                <img src="@Spot.ImageUrl" alt="@Spot.Name" class="w-full h-full object-cover" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                
-                <button @onclick="OnClose" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center font-bold text-sm hover:bg-black/80 transition">
-                    ✕
+    <div class="fixed inset-0 z-50 flex animate-fade-in items-start justify-center overflow-y-auto p-4 sm:items-center">
+        @* Separate backdrop element: click-to-close without relying on event propagation tricks *@
+        <div class="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm" @onclick="OnClose" aria-hidden="true"></div>
+
+        <div @ref="_dialog"
+             tabindex="-1"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="spot-modal-title"
+             aria-describedby="spot-modal-desc"
+             @onkeydown="HandleKeyDown"
+             class="relative my-8 w-full max-w-2xl animate-pop-in overflow-hidden rounded-3xl border border-white/40 bg-white shadow-2xl shadow-black/30 focus:outline-none">
+
+            <!-- Header banner -->
+            <div class="relative h-64 w-full sm:h-72">
+                <img src="@Spot.ImageUrl" alt="" class="h-full w-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10"></div>
+
+                <button type="button" @onclick="OnClose" aria-label="Close details"
+                        class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:bg-black/80 active:scale-95">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
 
-                <div class="absolute bottom-4 left-6 right-6 text-white flex justify-between items-end">
-                    <div>
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
-                            @Spot.Category
-                        </span>
-                        <h2 class="text-2xl font-black mt-1">@Spot.Name</h2>
-                        <p class="text-xs text-neutral-300">📍 @Spot.District • @Spot.PriceTier</p>
+                <div class="absolute inset-x-6 bottom-5 flex items-end justify-between gap-4 text-white">
+                    <div class="min-w-0 space-y-2">
+                        <CategoryBadge Category="Spot.Category" Solid="true" />
+                        <h2 id="spot-modal-title" class="font-display text-2xl font-black leading-tight sm:text-3xl">@Spot.Name</h2>
+                        <p class="flex items-center gap-1 text-xs text-neutral-200">
+                            <svg class="h-3.5 w-3.5 flex-shrink-0 text-rose-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                            <span class="truncate">@Spot.District</span>
+                        </p>
                     </div>
-                    <span class="text-2xl font-extrabold text-amber-400">₱@Spot.EstimatedPrice.ToString("N0")<span class="text-xs text-white/80 font-normal">/pax</span></span>
+                    <PriceTag Tier="@Spot.PriceTier" Price="Spot.EstimatedPrice" Large="true" />
                 </div>
             </div>
 
-            <!-- Modal Content -->
-            <div class="p-6 space-y-6">
-                <!-- Star Quality Highlight -->
-                <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 flex items-center gap-3">
-                    <span class="p-2 rounded-xl bg-amber-500 text-white">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <!-- Content -->
+            <div class="space-y-6 p-6">
+                <!-- Quick facts -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <RatingPill Rating="Spot.Rating" ReviewCount="Spot.ReviewCount" />
+                    <span class="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+                        🕒 @Spot.SuggestedDuration
                     </span>
-                    <div>
-                        <span class="text-[10px] font-black uppercase text-amber-800 tracking-wider">Star Quality Hallmark</span>
-                        <p class="text-sm font-bold text-neutral-900">@Spot.StarQuality</p>
+                    <span class="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-700">
+                        🚗 ~@Spot.EstTransitMinutes min transit
+                    </span>
+                    @if (Spot.IsHighDemand)
+                    {
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700">🔥 High demand</span>
+                    }
+                </div>
+
+                <!-- Star quality hallmark -->
+                <div class="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 p-4">
+                    <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-300/30 blur-2xl" aria-hidden="true"></div>
+                    <div class="relative flex items-center gap-3">
+                        <span class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/30">
+                            <StarIcon Class="h-5 w-5" />
+                        </span>
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-800">Star Quality Hallmark</span>
+                            <p class="text-sm font-bold text-neutral-900">@Spot.StarQuality</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Description -->
+                <!-- About -->
                 <div>
-                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">About Venue</h4>
-                    <p class="text-sm text-neutral-700 leading-relaxed">@Spot.Description</p>
+                    <h3 class="mb-1 text-xs font-bold uppercase tracking-wider text-neutral-400">About Venue</h3>
+                    <p id="spot-modal-desc" class="text-sm leading-relaxed text-neutral-700">@Spot.Description</p>
                 </div>
 
-                <!-- Menu Highlights & Best Sellers -->
+                <!-- Menu -->
                 <div>
-                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Menu Highlights & Best Sellers</h4>
-                    <div class="space-y-2">
+                    <h3 class="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-400">Menu Highlights &amp; Best Sellers</h3>
+                    <ul class="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100 bg-neutral-50/60">
                         @foreach (var item in Spot.MenuHighlights)
                         {
-                            <div class="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 border border-neutral-100">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-xs text-neutral-900">@item.Name</span>
+                            <li class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white">
+                                <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span class="text-sm font-bold text-neutral-900">@item.Name</span>
                                     @if (item.IsBestSeller)
                                     {
-                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                                            Best Seller
+                                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-rose-700">
+                                            🔥 Best Seller
                                         </span>
                                     }
                                 </div>
-                                <span class="text-xs font-extrabold text-neutral-800">₱@item.Price.ToString("N0")</span>
-                            </div>
+                                <span class="mt-2 min-w-4 flex-1 self-end border-b border-dotted border-neutral-300" aria-hidden="true"></span>
+                                <span class="text-sm font-extrabold tabular-nums text-neutral-900">₱@item.Price.ToString("N0")</span>
+                            </li>
                         }
-                    </div>
+                    </ul>
                 </div>
 
-                <!-- Traveler Review Section -->
-                <div class="pt-2 border-t border-neutral-100">
-                    <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Verified Traveler Review</h4>
-                    <div class="p-3.5 bg-neutral-50 rounded-2xl border border-neutral-100 flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-full bg-neutral-900 text-white font-black text-xs flex items-center justify-center flex-shrink-0">
-                            @Spot.FeaturedReview.AvatarInitials
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-neutral-900">@Spot.FeaturedReview.ReviewerName</span>
-                                <div class="flex text-amber-400 text-xs">
-                                    @for (int i = 0; i < Spot.FeaturedReview.RatingStars; i++)
-                                    {
-                                        <span>★</span>
-                                    }
-                                </div>
-                            </div>
-                            <p class="text-xs text-neutral-600 mt-1 italic">“@Spot.FeaturedReview.Comment”</p>
-                        </div>
-                    </div>
+                <!-- Review -->
+                <div class="border-t border-neutral-100 pt-4">
+                    <h3 class="mb-2 text-xs font-bold uppercase tracking-wider text-neutral-400">Verified Traveler Review</h3>
+                    <ReviewSnippet Review="Spot.FeaturedReview" />
                 </div>
 
-                <!-- Footer Action -->
-                <div class="flex gap-3 pt-3">
-                    <button @onclick="OnClose" class="flex-1 py-3 rounded-2xl text-xs font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition">
+                <!-- Footer actions -->
+                <div class="flex flex-col gap-3 pt-2 sm:flex-row">
+                    <button type="button" @onclick="OnClose"
+                            class="flex-1 rounded-2xl bg-neutral-100 py-3 text-xs font-bold text-neutral-700 transition hover:bg-neutral-200 active:scale-[0.98]">
                         Back to Catalog
                     </button>
-                    <button @onclick="() => OnToggleTrail.InvokeAsync(Spot)" 
-                            class="flex-1 py-3 rounded-2xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md transition">
+                    <a href="@MapsUrlBuilder.SearchUrl(Spot)" target="_blank" rel="noopener noreferrer"
+                       class="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-neutral-200 bg-white py-3 text-xs font-bold text-neutral-700 transition hover:border-amber-300 hover:bg-amber-50 active:scale-[0.98]">
+                        Open in Maps <span class="sr-only">(new tab)</span> <span aria-hidden="true">↗</span>
+                    </a>
+                    <button type="button" @onclick="() => OnToggleTrail.InvokeAsync(Spot)"
+                            class="flex-1 rounded-2xl py-3 text-xs font-bold shadow-md transition active:scale-[0.98] @(IsPinned ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100" : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600")">
                         @(IsPinned ? "Remove from Trail" : "+ Add to Trail")
                     </button>
                 </div>
@@ -108,4 +130,32 @@
     [Parameter] public bool IsPinned { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<FoodSpot> OnToggleTrail { get; set; }
+
+    private ElementReference _dialog;
+    private FoodSpot? _focusedFor;
+
+    // Move focus into the dialog when it opens so Esc works and screen readers announce it.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Spot is null)
+        {
+            _focusedFor = null;
+            return;
+        }
+
+        if (!ReferenceEquals(Spot, _focusedFor))
+        {
+            _focusedFor = Spot;
+            try { await _dialog.FocusAsync(); }
+            catch (Exception ex) when (ex is JSException or InvalidOperationException) { }
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
 }

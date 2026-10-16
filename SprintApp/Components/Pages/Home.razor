@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 @using SprintApp.Models
 @using SprintApp.Services
@@ -7,172 +7,166 @@
 @inject ITrailService Trail
 @implements IDisposable
 
-<!-- Rain Physics Background Canvas -->
+<PageTitle>Cebu Food Web · Culinary Trail Planner</PageTitle>
+
 <CebuRainCanvas />
+<ToastHost />
 
-<div class="relative min-h-screen bg-[#FFFDF7]/90 text-neutral-900 pb-20 z-10">
-    <!-- Auto-Dismissing Toast -->
-    @if (!string.IsNullOrEmpty(Trail.ActiveToastMessage))
-    {
-        <div class="fixed bottom-6 right-6 z-50 bg-neutral-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-neutral-700 animate-bounce">
-            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span class="text-xs font-semibold">@Trail.ActiveToastMessage</span>
-            <button @onclick="Trail.DismissToast" class="ml-2 text-neutral-400 hover:text-white text-xs">✕</button>
-        </div>
-    }
+<div class="relative z-10 pb-24">
+    <HeroBanner SpotCount="Trail.Spots.Count" />
 
-    <!-- Centralized Typography Hero with Queen City Skyline Backdrop -->
-    <header class="relative w-full overflow-hidden bg-neutral-950 py-20 px-6 border-b border-amber-950/40">
-        <!-- Skyline Photography Layer with Blended Mask -->
-        <div class="absolute inset-0 z-0 opacity-35 bg-cover bg-center" 
-             style="background-image: url('https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=80');">
-        </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent z-0"></div>
+    <main id="main-content" tabindex="-1" class="relative mx-auto -mt-14 max-w-7xl space-y-8 px-6 focus:outline-none">
+        @{ var spots = FilteredSpots.ToList(); }
 
-        <div class="relative z-10 max-w-5xl mx-auto text-center space-y-4">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                Queen City of the South • Culinary Pass
-            </div>
+        <TrailMetrics />
 
-            <!-- Outlined Stroke Typography Style -->
-            <h1 class="text-4xl sm:text-7xl font-black tracking-tight leading-none text-transparent uppercase select-none"
-                style="-webkit-text-stroke: 2px #f59e0b; text-shadow: 0 0 35px rgba(245, 158, 11, 0.35);">
-                Cebu Food Web
-            </h1>
-
-            <p class="text-xs sm:text-sm text-neutral-300 font-medium max-w-xl mx-auto tracking-wide">
-                Discover, Pin, and Devour Cebu’s Culinary Treasures
-            </p>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-6 pt-10 space-y-8">
-        <!-- Metrics Ribbon -->
-        <section class="bg-white/95 backdrop-blur-md rounded-3xl border border-amber-200/80 p-5 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-            <div class="sm:border-r border-neutral-100 pr-4">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Live Trail Metrics</span>
-                <p class="text-xs font-extrabold text-neutral-800 mt-0.5">Your Day At A Glance</p>
-            </div>
-            <div class="sm:border-r border-neutral-100 pr-4">
-                <span class="text-[10px] font-bold text-neutral-400 uppercase">Total Estimated Budget</span>
-                <p class="text-xl font-black text-amber-600">₱@Trail.GroupTotal.ToString("N0")</p>
-            </div>
-            <div class="sm:border-r border-neutral-100 pr-4">
-                <span class="text-[10px] font-bold text-neutral-400 uppercase">Total Scheduled Stops</span>
-                <p class="text-xl font-black text-neutral-900">@Trail.TotalStops Stops</p>
-            </div>
-            <div>
-                <span class="text-[10px] font-bold text-neutral-400 uppercase">Est. Transit Time</span>
-                <p class="text-xl font-black text-teal-600">~@Trail.TotalEstimatedMinutes mins</p>
-            </div>
-        </section>
-
-        <!-- Filters & Search -->
-        <div class="flex flex-col lg:flex-row justify-between gap-4 items-stretch lg:items-center">
-            <div class="flex flex-wrap gap-2">
-                @foreach (FoodCategory cat in Enum.GetValues<FoodCategory>())
+        <!-- Filters & search -->
+        <section aria-label="Find food spots" class="flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-center">
+            <div class="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+                @foreach (var cat in Enum.GetValues<FoodCategory>())
                 {
-                    <button @onclick="() => selectedCategory = cat" 
-                            class="px-4 py-2.5 rounded-2xl text-xs font-bold transition @(selectedCategory == cat ? "bg-amber-500 text-white shadow-sm" : "bg-white/95 text-neutral-700 border border-neutral-200 hover:bg-neutral-50")">
-                        @GetCategoryLabel(cat)
+                    var active = selectedCategory == cat;
+                    <button type="button"
+                            @onclick="() => selectedCategory = cat"
+                            aria-pressed="@(active ? "true" : "false")"
+                            class="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition duration-200 active:scale-95 @(active ? "bg-amber-500 text-white shadow-md shadow-amber-500/30" : "border border-neutral-200 bg-white/95 text-neutral-700 hover:border-amber-300 hover:bg-amber-50")">
+                        <span aria-hidden="true">@cat.ToEmoji()</span>
+                        @cat.ToLabel()
                     </button>
                 }
             </div>
 
-            <div class="w-full lg:w-80">
-                <input type="text"
+            <div class="relative w-full lg:w-80">
+                <label for="spot-search" class="sr-only">Search food spots or districts</label>
+                <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input id="spot-search"
+                       type="text"
+                       autocomplete="off"
                        placeholder="Search food spots, districts..."
                        @bind="searchQuery"
                        @bind:event="oninput"
-                       class="w-full bg-white/95 border border-neutral-200 rounded-2xl px-4 py-2.5 text-xs font-medium placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm" />
+                       class="w-full rounded-2xl border border-neutral-200 bg-white/95 py-2.5 pl-10 pr-10 text-xs font-medium placeholder-neutral-400 shadow-sm transition focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                @if (searchQuery.Length > 0)
+                {
+                    <button type="button" @onclick="() => searchQuery = string.Empty" aria-label="Clear search"
+                            class="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                }
             </div>
-        </div>
+        </section>
 
-        <!-- View Toggle (Cards vs Google Maps) -->
-        <div class="flex justify-between items-center pt-2">
+        <!-- View toggle -->
+        <div class="flex flex-wrap items-end justify-between gap-3 pt-2">
             <div>
-                <h3 class="text-base font-extrabold text-neutral-900">Spot Finder</h3>
-                <p class="text-xs text-neutral-400">Click any card to inspect detailed menus, star qualities, and verified reviews.</p>
+                <h2 class="font-display text-2xl font-black text-neutral-900">Spot Finder</h2>
+                <p class="text-xs text-neutral-500" aria-live="polite">@ResultsSummary(spots.Count)</p>
             </div>
-            <div class="flex items-center gap-1 bg-neutral-100 p-1 rounded-2xl border border-neutral-200">
-                <button @onclick="() => isMapView = false"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 @(!isMapView ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-900")">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                    Cards View
-                </button>
-                <button @onclick="() => isMapView = true"
-                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 @(isMapView ? "bg-amber-500 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900")">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                    Google Maps Route
-                </button>
+
+            <div class="inline-flex items-center gap-1 rounded-2xl border border-neutral-200 bg-white/80 p-1 backdrop-blur-md" role="group" aria-label="Choose view">
+                @foreach (var (toMap, label, iconPath) in ViewModes)
+                {
+                    var selected = isMapView == toMap;
+                    <button type="button"
+                            @onclick="() => isMapView = toMap"
+                            aria-pressed="@(selected ? "true" : "false")"
+                            class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition duration-200 @(selected ? "bg-amber-500 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900")">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="@iconPath" /></svg>
+                        @label
+                    </button>
+                }
             </div>
         </div>
 
-        <!-- Main Display Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <!-- Main layout -->
+        <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
             <div class="lg:col-span-2">
                 @if (isMapView)
                 {
-                    <RouteMapView />
+                    <RouteMapView OnBrowse="() => isMapView = false" />
+                }
+                else if (spots.Count == 0)
+                {
+                    <div class="rounded-3xl border border-dashed border-neutral-200 bg-white/90 p-12 text-center">
+                        <span class="mb-2 block text-4xl" aria-hidden="true">🔍</span>
+                        <p class="text-sm font-bold text-neutral-800">No matching culinary stops</p>
+                        <p class="mt-1 text-xs text-neutral-400">Try resetting your filters or search query.</p>
+                        <button type="button" @onclick="ResetFilters"
+                                class="mt-4 rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600 active:scale-95">
+                            Reset filters
+                        </button>
+                    </div>
                 }
                 else
                 {
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        @if (!FilteredSpots.Any())
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        @for (var i = 0; i < spots.Count; i++)
                         {
-                            <div class="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-neutral-200 p-8">
-                                <p class="text-sm font-bold text-neutral-800">No matching culinary stops</p>
-                                <p class="text-xs text-neutral-400 mt-1">Try resetting your filters or search query.</p>
-                            </div>
-                        }
-                        else
-                        {
-                            @foreach (var spot in FilteredSpots)
-                            {
-                                <SpotCard Spot="spot" 
-                                          IsPinned="Trail.IsSelected(spot.Id)" 
+                            var spot = spots[i];
+                            <div @key="spot.Id"
+                                 class="animate-pop-in motion-reduce:animate-none"
+                                 style="animation-delay: @(i * 60)ms;">
+                                <SpotCard Spot="spot"
+                                          IsPinned="Trail.IsSelected(spot.Id)"
                                           IsFavorite="Trail.IsFavorite(spot.Id)"
-                                          OnToggleTrail="Trail.AddStop" 
+                                          OnToggleTrail="ToggleStop"
                                           OnToggleFavorite="Trail.ToggleFavorite"
                                           OnSelectCard="OpenSpotModal" />
-                            }
+                            </div>
                         }
                     </div>
                 }
             </div>
 
-            <!-- Sticky Sidebar -->
             <div class="lg:col-span-1">
                 <TrailSidebar />
             </div>
         </div>
     </main>
 
-    <!-- Modal for Detailed Spot Inspection -->
-    <SpotDetailsModal Spot="inspectedSpot" 
-                      IsPinned="inspectedSpot != null && Trail.IsSelected(inspectedSpot.Id)" 
-                      OnClose="() => inspectedSpot = null" 
-                      OnToggleTrail="HandleModalToggle" />
+    <SpotDetailsModal Spot="inspectedSpot"
+                      IsPinned="inspectedSpot is not null && Trail.IsSelected(inspectedSpot.Id)"
+                      OnClose="() => inspectedSpot = null"
+                      OnToggleTrail="ToggleStop" />
 </div>
 
 @code {
-    private string searchQuery = "";
+    private string searchQuery = string.Empty;
     private FoodCategory selectedCategory = FoodCategory.All;
-    private bool isMapView = false;
+    private bool isMapView;
     private FoodSpot? inspectedSpot;
 
-    protected override void OnInitialized() => Trail.OnChange += StateHasChanged;
-    public void Dispose() => Trail.OnChange -= StateHasChanged;
+    private static readonly (bool Map, string Label, string Icon)[] ViewModes =
+    {
+        (false, "Cards View", "M4 6h16M4 10h16M4 14h16M4 18h16"),
+        (true, "Google Maps Route", "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7")
+    };
+
+    // Trail changes can originate on a background thread (toast timer) — marshal to the renderer.
+    protected override void OnInitialized() => Trail.OnChange += HandleTrailChanged;
+    private void HandleTrailChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Trail.OnChange -= HandleTrailChanged;
 
     private void OpenSpotModal(FoodSpot spot) => inspectedSpot = spot;
 
-    private void HandleModalToggle(FoodSpot spot)
+    private void ToggleStop(FoodSpot spot)
     {
         if (Trail.IsSelected(spot.Id))
+        {
             Trail.RemoveStop(spot.Id);
+            Trail.TriggerToast($"Removed {spot.Name} from your trail.");
+        }
         else
+        {
             Trail.AddStop(spot);
+            Trail.TriggerToast($"Added {spot.Name} to your trail.");
+        }
+    }
+
+    private void ResetFilters()
+    {
+        selectedCategory = FoodCategory.All;
+        searchQuery = string.Empty;
     }
 
     private IEnumerable<FoodSpot> FilteredSpots => Trail.Spots
@@ -181,13 +175,7 @@
                     s.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
                     s.District.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
 
-    private string GetCategoryLabel(FoodCategory cat) => cat switch
-    {
-        FoodCategory.All => "All Spots",
-        FoodCategory.LightMeals => "Street & Light",
-        FoodCategory.ComfortFood => "Comfort & BBQ",
-        FoodCategory.FineDining => "Fine Dining",
-        FoodCategory.LocalDelicacies => "Local Delicacies",
-        _ => cat.ToString()
-    };
+    private string ResultsSummary(int shown) => isMapView
+        ? $"{Trail.TotalStops} {(Trail.TotalStops == 1 ? "stop" : "stops")} chained into your route"
+        : $"Showing {shown} of {Trail.Spots.Count} spots · open a card for menus, star qualities and reviews";
 }
